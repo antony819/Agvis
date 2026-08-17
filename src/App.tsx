@@ -1,8 +1,8 @@
-import Canvas from './components/Canvas';
+import Workspace from './components/Workspace';
 import './App.css';
 
 function App() {
-  return <Canvas />;
+  return <Workspace />;
 }
 
 export default App;

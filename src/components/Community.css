@@ -1,0 +1,129 @@
+.community-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.community-header {
+  margin-bottom: 2rem;
+}
+
+.community-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.community-header p {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.community-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pack-search {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.pack-filter,
+.pack-sort {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.packs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.pack-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pack-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-border);
+}
+
+.pack-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.pack-card-header h3 {
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.pack-rating {
+  font-size: 0.875rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.pack-description {
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.pack-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pack-author {
+  font-size: 0.875rem;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.pack-install-btn {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pack-install-btn:hover {
+  opacity: 0.9;
+}
+
+.pack-install-btn:active {
+  transform: scale(0.98);
+}
+
+.loading,
+.no-packs {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text);
+  font-size: 1rem;
+}

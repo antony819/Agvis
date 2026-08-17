@@ -1,0 +1,45 @@
+.ai-composer {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.composer-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.composer-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.composer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.composer-send {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.composer-send:hover {
+  opacity: 0.9;
+}
+
+.composer-send:active {
+  transform: scale(0.98);
+}

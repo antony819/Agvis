@@ -1,0 +1,268 @@
+/* ── Card shell ──────────────────────────────────────────── */
+.block-card {
+  position: absolute;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  min-width: 300px;
+  max-width: 520px;
+  z-index: 10;
+}
+
+.block-card:hover {
+  box-shadow: 0 20px 30px -8px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Invisible drag strip at the very top ────────────────── */
+.block-drag-strip {
+  height: 14px;
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+  cursor: move;
+}
+
+/* ── Close button ────────────────────────────────────────── */
+.block-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 20;
+}
+
+.block-card:hover .block-close {
+  opacity: 1;
+}
+
+.block-close:hover {
+  background: var(--error);
+  color: white;
+  opacity: 1;
+}
+
+/* ── Content area ────────────────────────────────────────── */
+.block-content {
+  padding: 1.125rem 1.25rem 1.25rem;
+}
+
+/* ── Shared block label (name inside content) ────────────── */
+.block-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: 0.5;
+  margin: 0 0 0.75rem;
+}
+
+/* ── Chat block ──────────────────────────────────────────── */
+.chat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.chat-empty {
+  color: var(--text);
+  opacity: 0.45;
+  font-style: italic;
+  font-size: 14px;
+  text-align: center;
+  padding: 1.5rem 0;
+  margin: 0;
+}
+
+.chat-msg {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+}
+
+.chat-msg-avatar {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.chat-msg-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+}
+
+.chat-msg.user .chat-msg-text {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.chat-msg.assistant .chat-msg-text {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 14px;
+}
+
+.chat-input-row button {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chat-input-row button:hover { opacity: 0.9; }
+
+/* ── Document block ──────────────────────────────────────── */
+.document-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.doc-filename {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h);
+  background: var(--bg-secondary);
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+}
+
+.doc-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.doc-status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.doc-status-item.parsed,
+.doc-status-item.indexed { color: var(--success); }
+
+.doc-status-item.parsing,
+.doc-status-item.indexing {
+  color: var(--warning);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.doc-status-badge {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.6;
+  text-transform: capitalize;
+}
+
+.doc-meta { font-size: 12px; opacity: 0.6; margin: 0; }
+.doc-uploading { color: var(--accent); font-style: italic; margin: 0; }
+
+/* ── Knowledge block ─────────────────────────────────────── */
+.knowledge-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 120px;
+}
+
+.knowledge-empty {
+  color: var(--text);
+  opacity: 0.45;
+  font-style: italic;
+  font-size: 14px;
+  margin: 0;
+}
+
+.knowledge-add-btn {
+  padding: 0.625rem;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px dashed var(--accent-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.knowledge-add-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-style: solid;
+}
+
+/* ── Note block ──────────────────────────────────────────── */
+.note-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.note-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 0.75rem;
+  font-size: 14px;
+  font-family: var(--mono);
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.note-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}

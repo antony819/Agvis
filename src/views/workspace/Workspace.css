@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: var(--bg);
   overflow: hidden;
+  background: var(--bg);
 }
 
 .workspace-canvas {
@@ -13,7 +13,6 @@
   background: var(--bg);
 }
 
-/* Empty state */
 .workspace-empty {
   position: absolute;
   inset: 0;
@@ -26,25 +25,6 @@
   user-select: none;
 }
 
-.empty-icon {
-  font-size: 48px;
-  opacity: 0.15;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-h);
-  opacity: 0.4;
-  margin: 0;
-}
-
-.empty-hint {
-  font-size: 14px;
-  color: var(--text);
-  opacity: 0.4;
-  margin: 0;
-  text-align: center;
-  max-width: 340px;
-  line-height: 1.6;
-}
+.empty-icon  { font-size: 48px; opacity: 0.12; }
+.empty-title { font-size: 18px; font-weight: 600; color: var(--text-h); opacity: 0.35; margin: 0; }
+.empty-hint  { font-size: 14px; color: var(--text); opacity: 0.35; margin: 0; text-align: center; max-width: 320px; line-height: 1.6; }

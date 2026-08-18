@@ -1,5 +1,5 @@
-import type { BlockTypeDefinition } from '../types';
-import { PortDataType } from '../types';
+import type { BlockTypeDefinition } from '../models';
+import { PortDataType } from '../models';
 
 // Chat Block Definition
 export const ChatBlockType: BlockTypeDefinition = {

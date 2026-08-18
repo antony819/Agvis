@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import type { BlockInstance } from '../../models';
 import ChatBlock from '../blocks/ChatBlock';
@@ -12,9 +12,7 @@ interface Props {
   block: BlockInstance;
   onRemove: (id: string) => void;
   onUpdate: (id: string, updates: Partial<BlockInstance>) => void;
-  /** Called once the DOM node is available so the canvas can track sizes */
   registerRef: (id: string, el: HTMLDivElement | null) => void;
-  /** Returns bounding rects of every block except the one being dragged */
   getOtherRects: (excludeId: string) => { x: number; y: number; w: number; h: number }[];
 }
 
@@ -22,20 +20,20 @@ export default function Block({ block, onRemove, onUpdate, registerRef, getOther
   const nodeRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(block.position);
 
+  // Single callback ref that feeds both Draggable's nodeRef and the canvas registry
+  const setEl = useCallback(
+    (el: HTMLDivElement | null) => {
+      (nodeRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      registerRef(block.id, el);
+    },
+    [block.id, registerRef],
+  );
+
   const handleStop = (_e: unknown, data: { x: number; y: number }) => {
     const el = nodeRef.current;
-    if (!el) {
-      const next = { x: data.x, y: data.y };
-      setPos(next);
-      onUpdate(block.id, { position: next });
-      return;
-    }
-
-    const w = el.offsetWidth;
-    const h = el.offsetHeight;
-    const others = getOtherRects(block.id);
-
-    const resolved = resolveNoOverlap({ x: data.x, y: data.y, w, h }, others);
+    const w = el ? el.offsetWidth  : 300;
+    const h = el ? el.offsetHeight : 200;
+    const resolved = resolveNoOverlap({ x: data.x, y: data.y, w, h }, getOtherRects(block.id));
     setPos(resolved);
     onUpdate(block.id, { position: resolved });
   };
@@ -44,21 +42,21 @@ export default function Block({ block, onRemove, onUpdate, registerRef, getOther
     <Draggable
       nodeRef={nodeRef}
       position={pos}
+      // Update pos every tick so the block actually follows the cursor
+      onDrag={(_e, data) => setPos({ x: data.x, y: data.y })}
       onStop={handleStop}
-      handle=".block-drag-handle"
+      // Whole card is draggable; cancel on interactive elements
+      cancel="input, textarea, button, select, a, [contenteditable]"
     >
-      <div
-        ref={(el) => {
-          (nodeRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
-          registerRef(block.id, el);
-        }}
-        className="block-card"
-      >
-        <button className="block-close" onClick={() => onRemove(block.id)} title="Remove">
+      <div ref={setEl} className="block-card">
+        <button
+          className="block-close"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => onRemove(block.id)}
+          title="Remove"
+        >
           ✕
         </button>
-
-        <div className="block-drag-handle block-drag-strip" />
 
         <div className="block-content">
           {block.type === 'chat'      && <ChatBlock      block={block} onUpdate={onUpdate} />}

@@ -7,6 +7,7 @@ import TopBar from '../ui/TopBar';
 import type { BlockInstance } from '../../models';
 import { BLOCK_TYPES } from '../../services/blockTypes';
 import { uploadDocument } from '../../services/api';
+import { resolveNoOverlap } from '../../services/collisionService';
 import './Workspace.css';
 
 export default function Workspace() {
@@ -46,13 +47,33 @@ export default function Workspace() {
     (type: string) => {
       const blockType = BLOCK_TYPES[type];
       if (!blockType) return;
-      const offset = useWorkspaceStore.getState().workspace?.blocks.length ?? 0;
+
+      const existingBlocks = useWorkspaceStore.getState().workspace?.blocks ?? [];
+
+      // Default spawn point
+      const SPAWN_W = 320;
+      const SPAWN_H = 220;
+      const otherRects = existingBlocks.map((b) => {
+        const el = blockRefs.current.get(b.id);
+        return {
+          x: b.position.x,
+          y: b.position.y,
+          w: el ? el.offsetWidth  : SPAWN_W,
+          h: el ? el.offsetHeight : SPAWN_H,
+        };
+      });
+
+      const safePos = resolveNoOverlap(
+        { x: 80, y: 80, w: SPAWN_W, h: SPAWN_H },
+        otherRects,
+      );
+
       const newBlock: BlockInstance = {
         id: nanoid(),
         type,
         version: blockType.version,
-        position: { x: 80 + offset * 28, y: 80 + offset * 28 },
-        name: `${blockType.name} ${offset + 1}`,
+        position: safePos,
+        name: `${blockType.name} ${existingBlocks.length + 1}`,
         config: { ...blockType.defaultConfig },
         selected: false,
         automationMode: false,

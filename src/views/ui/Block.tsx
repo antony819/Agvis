@@ -14,13 +14,13 @@ interface Props {
   onUpdate: (id: string, updates: Partial<BlockInstance>) => void;
   registerRef: (id: string, el: HTMLDivElement | null) => void;
   getOtherRects: (excludeId: string) => { x: number; y: number; w: number; h: number }[];
+  onAskFromDoc?: (block: BlockInstance) => void;
 }
 
-export default function Block({ block, onRemove, onUpdate, registerRef, getOtherRects }: Props) {
+export default function Block({ block, onRemove, onUpdate, registerRef, getOtherRects, onAskFromDoc }: Props) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(block.position);
 
-  // Single callback ref that feeds both Draggable's nodeRef and the canvas registry
   const setEl = useCallback(
     (el: HTMLDivElement | null) => {
       (nodeRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
@@ -42,10 +42,8 @@ export default function Block({ block, onRemove, onUpdate, registerRef, getOther
     <Draggable
       nodeRef={nodeRef}
       position={pos}
-      // Update pos every tick so the block actually follows the cursor
       onDrag={(_e, data) => setPos({ x: data.x, y: data.y })}
       onStop={handleStop}
-      // Whole card is draggable; cancel on interactive elements
       cancel="input, textarea, button, select, a, [contenteditable]"
     >
       <div ref={setEl} className="block-card">
@@ -59,10 +57,22 @@ export default function Block({ block, onRemove, onUpdate, registerRef, getOther
         </button>
 
         <div className="block-content">
-          {block.type === 'chat'      && <ChatBlock      block={block} onUpdate={onUpdate} />}
-          {block.type === 'document'  && <DocumentBlock  block={block} onUpdate={onUpdate} />}
-          {block.type === 'note'      && <NoteBlock      block={block} onUpdate={onUpdate} />}
-          {block.type === 'knowledge' && <KnowledgeBlock block={block} onUpdate={onUpdate} />}
+          {block.type === 'chat' && (
+            <ChatBlock block={block} onUpdate={onUpdate} />
+          )}
+          {block.type === 'document' && (
+            <DocumentBlock
+              block={block}
+              onUpdate={onUpdate}
+              onAsk={onAskFromDoc ? () => onAskFromDoc(block) : undefined}
+            />
+          )}
+          {block.type === 'note' && (
+            <NoteBlock block={block} onUpdate={onUpdate} />
+          )}
+          {block.type === 'knowledge' && (
+            <KnowledgeBlock block={block} onUpdate={onUpdate} />
+          )}
         </div>
       </div>
     </Draggable>

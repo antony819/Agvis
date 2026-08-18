@@ -3,24 +3,45 @@ import type { BlockInstance, Edge, Workspace } from '../models';
 import { BLOCK_TYPES } from '../services/blockTypes';
 import { nanoid } from 'nanoid';
 
+export type AppPage = 'workspace' | 'community' | 'settings';
+
 interface WorkspaceState {
   workspace: Workspace | null;
   selectedBlockIds: string[];
+  currentPage: AppPage;
 
+  // Undo / redo stacks (store full workspace snapshots)
+  past: Workspace[];
+  future: Workspace[];
+
+  setPage: (page: AppPage) => void;
   createWorkspace: (name: string) => void;
-  addBlock: (type: string, position: { x: number; y: number }) => void;
+  addBlock: (type: string, position: { x: number; y: number }) => BlockInstance | null;
   updateBlock: (id: string, updates: Partial<BlockInstance>) => void;
   deleteBlock: (id: string) => void;
   addEdge: (edge: Omit<Edge, 'id' | 'createdAt' | 'status'>) => void;
   deleteEdge: (id: string) => void;
+  undo: () => void;
+  redo: () => void;
+}
+
+function snapshot(ws: Workspace): Workspace {
+  return JSON.parse(JSON.stringify(ws));
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   workspace: null,
   selectedBlockIds: [],
+  currentPage: 'workspace',
+  past: [],
+  future: [],
+
+  setPage: (page) => set({ currentPage: page }),
 
   createWorkspace: (name) => {
     set({
+      past: [],
+      future: [],
       workspace: {
         id: nanoid(),
         name,
@@ -34,10 +55,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   addBlock: (type, position) => {
-    const { workspace } = get();
-    if (!workspace) return;
+    const { workspace, past } = get();
+    if (!workspace) return null;
     const blockType = BLOCK_TYPES[type];
-    if (!blockType) return;
+    if (!blockType) return null;
 
     const newBlock: BlockInstance = {
       id: nanoid(),
@@ -53,12 +74,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     };
 
     set({
+      past: [...past, snapshot(workspace)],
+      future: [],
       workspace: {
         ...workspace,
         blocks: [...workspace.blocks, newBlock],
         updatedAt: new Date().toISOString(),
       },
     });
+    return newBlock;
   },
 
   updateBlock: (id, updates) => {
@@ -76,9 +100,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   deleteBlock: (id) => {
-    const { workspace } = get();
+    const { workspace, past } = get();
     if (!workspace) return;
     set({
+      past: [...past, snapshot(workspace)],
+      future: [],
       workspace: {
         ...workspace,
         blocks: workspace.blocks.filter((b) => b.id !== id),
@@ -91,32 +117,51 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   addEdge: (edge) => {
-    const { workspace } = get();
+    const { workspace, past } = get();
     if (!workspace) return;
     const newEdge: Edge = {
-      ...edge,
-      id: nanoid(),
-      status: 'valid',
-      createdAt: new Date().toISOString(),
+      ...edge, id: nanoid(), status: 'valid', createdAt: new Date().toISOString(),
     };
     set({
-      workspace: {
-        ...workspace,
-        edges: [...workspace.edges, newEdge],
-        updatedAt: new Date().toISOString(),
-      },
+      past: [...past, snapshot(workspace)],
+      future: [],
+      workspace: { ...workspace, edges: [...workspace.edges, newEdge], updatedAt: new Date().toISOString() },
     });
   },
 
   deleteEdge: (id) => {
-    const { workspace } = get();
+    const { workspace, past } = get();
     if (!workspace) return;
     set({
+      past: [...past, snapshot(workspace)],
+      future: [],
       workspace: {
         ...workspace,
         edges: workspace.edges.filter((e) => e.id !== id),
         updatedAt: new Date().toISOString(),
       },
+    });
+  },
+
+  undo: () => {
+    const { workspace, past, future } = get();
+    if (!past.length || !workspace) return;
+    const prev = past[past.length - 1];
+    set({
+      past: past.slice(0, -1),
+      future: [snapshot(workspace), ...future],
+      workspace: prev,
+    });
+  },
+
+  redo: () => {
+    const { workspace, past, future } = get();
+    if (!future.length || !workspace) return;
+    const next = future[0];
+    set({
+      past: [...past, snapshot(workspace)],
+      future: future.slice(1),
+      workspace: next,
     });
   },
 }));

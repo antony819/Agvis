@@ -16,22 +16,10 @@
   gap: 0.5rem;
 }
 
-.topbar-logo {
-  font-size: 20px;
-  color: var(--accent);
-}
+.topbar-logo { font-size: 20px; color: var(--accent); }
+.topbar-name { font-size: 16px; font-weight: 700; color: var(--text-h); letter-spacing: -0.3px; }
 
-.topbar-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-h);
-  letter-spacing: -0.3px;
-}
-
-.topbar-nav {
-  display: flex;
-  gap: 0.25rem;
-}
+.topbar-nav { display: flex; gap: 0.25rem; }
 
 .topbar-nav-btn {
   padding: 0.375rem 0.875rem;
@@ -45,22 +33,29 @@
   transition: background 0.15s, color 0.15s;
 }
 
-.topbar-nav-btn:hover {
-  background: var(--accent-bg);
-  color: var(--accent);
-}
+.topbar-nav-btn:hover { background: var(--accent-bg); color: var(--accent); }
+.topbar-nav-btn.active { background: var(--accent-bg); color: var(--accent); }
 
-.topbar-nav-btn.active {
-  background: var(--accent-bg);
-  color: var(--accent);
-}
-
-.topbar-right {
+.topbar-actions {
   margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
 }
 
-.topbar-workspace-name {
-  font-size: 13px;
-  color: var(--text);
-  opacity: 0.6;
+.topbar-tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text-h);
+  transition: background 0.15s;
 }
+
+.topbar-tool-btn:hover:not(:disabled) { background: var(--accent-bg); border-color: var(--accent-border); }
+.topbar-tool-btn:disabled { opacity: 0.3; cursor: default; }

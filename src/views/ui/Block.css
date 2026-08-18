@@ -203,7 +203,30 @@
 }
 
 .doc-meta { font-size: 12px; opacity: 0.6; margin: 0; }
-.doc-uploading { color: var(--accent); font-style: italic; margin: 0; }
+.doc-error {
+  padding: 0.5rem 0.75rem;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--error);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.doc-ask-btn {
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: opacity 0.15s;
+}
+
+.doc-ask-btn:hover { opacity: 0.88; }
 
 /* ── Knowledge block ─────────────────────────────────────── */
 .knowledge-block {

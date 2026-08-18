@@ -1,0 +1,43 @@
+.ai-composer {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  padding: 0.875rem 1.25rem;
+  flex-shrink: 0;
+}
+
+.composer-form {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.composer-input {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.composer-input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.composer-send {
+  padding: 0.625rem 1.25rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.composer-send:hover:not(:disabled) { opacity: 0.88; }
+.composer-send:disabled { opacity: 0.35; cursor: default; }

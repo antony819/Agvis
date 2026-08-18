@@ -2,10 +2,13 @@ import { useEffect } from 'react';
 import { useWorkspaceStore, type AppPage } from '../../viewmodels/workspaceViewModel';
 import './TopBar.css';
 
-export default function TopBar() {
+interface Props {
+  onExport?: () => void;
+}
+
+export default function TopBar({ onExport }: Props) {
   const { currentPage, setPage, undo, redo, past, future } = useWorkspaceStore();
 
-  // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
@@ -39,22 +42,13 @@ export default function TopBar() {
       </nav>
 
       <div className="topbar-actions">
-        <button
-          className="topbar-tool-btn"
-          onClick={undo}
-          disabled={past.length === 0}
-          title="Undo (Ctrl+Z)"
-        >
-          ↩
-        </button>
-        <button
-          className="topbar-tool-btn"
-          onClick={redo}
-          disabled={future.length === 0}
-          title="Redo (Ctrl+Y)"
-        >
-          ↪
-        </button>
+        <button className="topbar-tool-btn" onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">↩</button>
+        <button className="topbar-tool-btn" onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Y)">↪</button>
+        {onExport && (
+          <button className="topbar-tool-btn export-btn" onClick={onExport} title="Export as Pack">
+            ⬆ Export Pack
+          </button>
+        )}
       </div>
     </header>
   );

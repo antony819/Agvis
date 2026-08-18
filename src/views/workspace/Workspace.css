@@ -6,6 +6,12 @@
   background: var(--bg);
 }
 
+.workspace-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
 .workspace-canvas {
   flex: 1;
   position: relative;

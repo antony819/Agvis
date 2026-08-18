@@ -1,9 +1,12 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { useWorkspaceStore } from '../../viewmodels/workspaceViewModel';
 import Block from '../ui/Block';
 import AddBlockPanel from '../ui/AddBlockPanel';
 import TopBar from '../ui/TopBar';
+import AIComposer from '../ui/AIComposer';
+import Inspector from '../ui/Inspector';
+import PackExportDialog from '../ui/PackExportDialog';
 import CommunityPage from '../community/CommunityPage';
 import SettingsPage from '../settings/SettingsPage';
 import type { BlockInstance } from '../../models';
@@ -16,14 +19,20 @@ const SPAWN_W = 320;
 const SPAWN_H = 220;
 
 export default function Workspace() {
-  const { workspace, createWorkspace, updateBlock, deleteBlock, currentPage, addBlock } =
+  const { workspace, createWorkspace, updateBlock, deleteBlock, addBlock, currentPage } =
     useWorkspaceStore();
   const canvasRef = useRef<HTMLDivElement>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+  const [selectedId, setSelectedId]       = useState<string | null>(null);
+  const [showExport, setShowExport]       = useState(false);
+
+  const selectedBlock = workspace?.blocks.find((b) => b.id === selectedId) ?? null;
+
+  // ── Ref registry ────────────────────────────────────────
   const registerRef = useCallback((id: string, el: HTMLDivElement | null) => {
     if (el) blockRefs.current.set(id, el);
-    else blockRefs.current.delete(id);
+    else    blockRefs.current.delete(id);
   }, []);
 
   const getOtherRects = useCallback((excludeId: string) => {
@@ -36,22 +45,15 @@ export default function Workspace() {
       });
   }, []);
 
-  const safeSpawnPos = useCallback(
-    (nearX?: number, nearY?: number) => {
-      const allRects = (useWorkspaceStore.getState().workspace?.blocks ?? []).map((b) => {
-        const el = blockRefs.current.get(b.id);
-        return { x: b.position.x, y: b.position.y, w: el?.offsetWidth ?? SPAWN_W, h: el?.offsetHeight ?? SPAWN_H };
-      });
-      return resolveNoOverlap({ x: nearX ?? 80, y: nearY ?? 80, w: SPAWN_W, h: SPAWN_H }, allRects);
-    },
-    []
-  );
+  const safeSpawnPos = useCallback((nearX = 80, nearY = 80) => {
+    const allRects = (useWorkspaceStore.getState().workspace?.blocks ?? []).map((b) => {
+      const el = blockRefs.current.get(b.id);
+      return { x: b.position.x, y: b.position.y, w: el?.offsetWidth ?? SPAWN_W, h: el?.offsetHeight ?? SPAWN_H };
+    });
+    return resolveNoOverlap({ x: nearX, y: nearY, w: SPAWN_W, h: SPAWN_H }, allRects);
+  }, []);
 
-  if (!workspace) {
-    createWorkspace('My Workspace');
-    return null;
-  }
-
+  // ── Block actions ────────────────────────────────────────
   const handleAddBlock = useCallback(
     (type: string, nearX?: number, nearY?: number) => {
       const pos = safeSpawnPos(nearX, nearY);
@@ -60,72 +62,82 @@ export default function Workspace() {
     [addBlock, safeSpawnPos]
   );
 
-  // Called by DocumentBlock's "Ask" button — spawns a Chat block next to the doc
+  const handleDuplicate = useCallback(
+    (block: BlockInstance) => {
+      const el = blockRefs.current.get(block.id);
+      const pos = safeSpawnPos(
+        block.position.x + (el?.offsetWidth ?? SPAWN_W) + 20,
+        block.position.y,
+      );
+      const copy: BlockInstance = {
+        ...block,
+        id: nanoid(),
+        name: `${block.name} (copy)`,
+        position: pos,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      useWorkspaceStore.setState((s) => ({
+        workspace: s.workspace
+          ? { ...s.workspace, blocks: [...s.workspace.blocks, copy] }
+          : s.workspace,
+      }));
+    },
+    [safeSpawnPos]
+  );
+
   const handleAskFromDoc = useCallback(
     (docBlock: BlockInstance) => {
       const el = blockRefs.current.get(docBlock.id);
-      const nearX = docBlock.position.x + (el?.offsetWidth ?? SPAWN_W) + 20;
-      const nearY = docBlock.position.y;
-      const pos = safeSpawnPos(nearX, nearY);
-      addBlock('chat', pos);
+      handleAddBlock('chat', docBlock.position.x + (el?.offsetWidth ?? SPAWN_W) + 20, docBlock.position.y);
     },
-    [addBlock, safeSpawnPos]
+    [handleAddBlock]
   );
 
+  // ── File drop ────────────────────────────────────────────
   const handleFileDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const files = Array.from(e.dataTransfer.files);
       if (!files.length) return;
-
       const rect = canvasRef.current?.getBoundingClientRect();
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const rawX = rect ? e.clientX - rect.left + i * 20 : 120 + i * 20;
-        const rawY = rect ? e.clientY - rect.top  + i * 20 : 120 + i * 20;
-        const pos = safeSpawnPos(rawX, rawY);
-        const bt = BLOCK_TYPES['document'];
-        const id = nanoid();
+        const rawX = (rect ? e.clientX - rect.left : 120) + i * 20;
+        const rawY = (rect ? e.clientY - rect.top  : 120) + i * 20;
+        const pos  = safeSpawnPos(rawX, rawY);
+        const bt   = BLOCK_TYPES['document'];
+        const id   = nanoid();
+
         const newBlock: BlockInstance = {
-          id,
-          type: 'document',
-          version: bt.version,
-          position: pos,
+          id, type: 'document', version: bt.version, position: pos,
           name: file.name,
           config: { ...bt.defaultConfig, filename: file.name },
-          selected: false,
-          automationMode: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          selected: false, automationMode: false,
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         };
         useWorkspaceStore.setState((s) => ({
           workspace: s.workspace
             ? { ...s.workspace, blocks: [...s.workspace.blocks, newBlock] }
             : s.workspace,
         }));
+
         try {
           const result = await uploadDocument(file);
           useWorkspaceStore.setState((s) => ({
             workspace: s.workspace
-              ? {
-                  ...s.workspace,
-                  blocks: s.workspace.blocks.map((b) =>
-                    b.id === id ? { ...b, config: { ...b.config, fileId: result.documentId } } : b
-                  ),
-                }
+              ? { ...s.workspace, blocks: s.workspace.blocks.map((b) =>
+                  b.id === id ? { ...b, config: { ...b.config, fileId: result.documentId } } : b) }
               : s.workspace,
           }));
         } catch {
           useWorkspaceStore.setState((s) => ({
             workspace: s.workspace
-              ? {
-                  ...s.workspace,
-                  blocks: s.workspace.blocks.map((b) =>
-                    b.id === id
-                      ? { ...b, config: { ...b.config, uploadError: 'Backend offline — file not indexed' } }
-                      : b
-                  ),
-                }
+              ? { ...s.workspace, blocks: s.workspace.blocks.map((b) =>
+                  b.id === id
+                    ? { ...b, config: { ...b.config, uploadError: 'Backend offline — file not indexed' } }
+                    : b) }
               : s.workspace,
           }));
         }
@@ -134,42 +146,92 @@ export default function Workspace() {
     [safeSpawnPos]
   );
 
+  // ── AI Composer ──────────────────────────────────────────
+  const handleComposerSend = useCallback((message: string) => {
+    // For now, route the message to a new Chat block
+    const pos = safeSpawnPos(80, 80);
+    const bt  = BLOCK_TYPES['chat'];
+    const id  = nanoid();
+    const newBlock: BlockInstance = {
+      id, type: 'chat', version: bt.version, position: pos,
+      name: 'Chat', config: { ...bt.defaultConfig, initialMessage: message },
+      selected: false, automationMode: false,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    };
+    useWorkspaceStore.setState((s) => ({
+      workspace: s.workspace
+        ? { ...s.workspace, blocks: [...s.workspace.blocks, newBlock] }
+        : s.workspace,
+    }));
+    setSelectedId(id);
+  }, [safeSpawnPos]);
+
+  // ── Init ─────────────────────────────────────────────────
+  if (!workspace) {
+    createWorkspace('My Workspace');
+    return null;
+  }
+
   return (
     <div className="workspace-root">
-      <TopBar />
+      <TopBar onExport={() => setShowExport(true)} />
 
       {currentPage === 'community' && <CommunityPage />}
       {currentPage === 'settings'  && <SettingsPage />}
 
       {currentPage === 'workspace' && (
         <>
-          <div
-            className="workspace-canvas"
-            ref={canvasRef}
-            onDrop={handleFileDrop}
-            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
-          >
-            {workspace.blocks.length === 0 && (
-              <div className="workspace-empty">
-                <div className="empty-icon">✦</div>
-                <p className="empty-title">Your workspace is empty</p>
-                <p className="empty-hint">Click "Add Block" below, or drag a file here</p>
-              </div>
-            )}
-            {workspace.blocks.map((block) => (
-              <Block
-                key={block.id}
-                block={block}
-                onRemove={deleteBlock}
+          <div className="workspace-body">
+            <div
+              className="workspace-canvas"
+              ref={canvasRef}
+              onDrop={handleFileDrop}
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+              onClick={(e) => {
+                if (e.target === canvasRef.current) setSelectedId(null);
+              }}
+            >
+              {workspace.blocks.length === 0 && (
+                <div className="workspace-empty">
+                  <div className="empty-icon">✦</div>
+                  <p className="empty-title">Your workspace is empty</p>
+                  <p className="empty-hint">Click "Add Block" below, or drag a file here</p>
+                </div>
+              )}
+              {workspace.blocks.map((block) => (
+                <div key={block.id} onClick={() => setSelectedId(block.id)}>
+                  <Block
+                    block={block}
+                    onRemove={(id) => { deleteBlock(id); if (selectedId === id) setSelectedId(null); }}
+                    onUpdate={updateBlock}
+                    onDuplicate={handleDuplicate}
+                    registerRef={registerRef}
+                    getOtherRects={getOtherRects}
+                    onAskFromDoc={handleAskFromDoc}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {selectedBlock && (
+              <Inspector
+                block={selectedBlock}
                 onUpdate={updateBlock}
-                registerRef={registerRef}
-                getOtherRects={getOtherRects}
-                onAskFromDoc={handleAskFromDoc}
+                onClose={() => setSelectedId(null)}
               />
-            ))}
+            )}
           </div>
+
+          <AIComposer onSend={handleComposerSend} />
           <AddBlockPanel onAdd={handleAddBlock} />
         </>
+      )}
+
+      {showExport && workspace.blocks.length > 0 && (
+        <PackExportDialog
+          blocks={workspace.blocks}
+          onClose={() => setShowExport(false)}
+        />
       )}
     </div>
   );

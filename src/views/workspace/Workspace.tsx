@@ -13,6 +13,30 @@ export default function Workspace() {
   const { workspace, createWorkspace, updateBlock, deleteBlock } = useWorkspaceStore();
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Map of blockId → DOM element for collision size queries
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const registerRef = useCallback((id: string, el: HTMLDivElement | null) => {
+    if (el) blockRefs.current.set(id, el);
+    else    blockRefs.current.delete(id);
+  }, []);
+
+  const getOtherRects = useCallback((excludeId: string) => {
+    const state = useWorkspaceStore.getState();
+    const rects: { x: number; y: number; w: number; h: number }[] = [];
+    state.workspace?.blocks.forEach((b) => {
+      if (b.id === excludeId) return;
+      const el = blockRefs.current.get(b.id);
+      rects.push({
+        x: b.position.x,
+        y: b.position.y,
+        w: el ? el.offsetWidth  : 300,
+        h: el ? el.offsetHeight : 200,
+      });
+    });
+    return rects;
+  }, []);
+
   if (!workspace) {
     createWorkspace('My Workspace');
     return null;
@@ -106,7 +130,14 @@ export default function Workspace() {
           </div>
         )}
         {workspace.blocks.map((block) => (
-          <Block key={block.id} block={block} onRemove={deleteBlock} onUpdate={updateBlock} />
+          <Block
+            key={block.id}
+            block={block}
+            onRemove={deleteBlock}
+            onUpdate={updateBlock}
+            registerRef={registerRef}
+            getOtherRects={getOtherRects}
+          />
         ))}
       </div>
       <AddBlockPanel onAdd={handleAddBlock} />

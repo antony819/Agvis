@@ -9,9 +9,8 @@
 .workspace-canvas {
   flex: 1;
   position: relative;
-  overflow: hidden;
-  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  overflow: auto;
+  background: var(--bg);
 }
 
 /* Empty state */

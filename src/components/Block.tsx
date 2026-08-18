@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import type { BlockInstance } from '../types';
 import { getBlockType } from '../lib/blockTypes';
@@ -16,6 +16,7 @@ interface BlockProps {
 
 export default function Block({ block, onRemove, onUpdate }: BlockProps) {
   const [minimized, setMinimized] = useState(false);
+  const nodeRef = useRef<HTMLDivElement>(null);
   const blockType = getBlockType(block.type);
 
   if (!blockType) return null;
@@ -26,12 +27,12 @@ export default function Block({ block, onRemove, onUpdate }: BlockProps) {
 
   return (
     <Draggable
+      nodeRef={nodeRef}
       defaultPosition={block.position}
       onStop={handleStop}
       handle=".block-drag-handle"
-      bounds="parent"
     >
-      <div className={`block-card ${minimized ? 'minimized' : ''}`}>
+      <div ref={nodeRef} className={`block-card ${minimized ? 'minimized' : ''}`}>
         <div className="block-drag-handle block-titlebar">
           <span className="block-type-icon">{blockType.icon}</span>
           <span className="block-title">{block.name}</span>

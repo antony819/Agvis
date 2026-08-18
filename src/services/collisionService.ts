@@ -1,4 +1,4 @@
-const GAP = 12; // minimum space between blocks
+const GAP = 0.2;
 
 interface Rect {
   x: number;
@@ -9,23 +9,25 @@ interface Rect {
 
 function overlaps(a: Rect, b: Rect): boolean {
   return (
-    a.x < b.x + b.w + GAP &&
-    a.x + a.w + GAP > b.x &&
-    a.y < b.y + b.h + GAP &&
-    a.y + a.h + GAP > b.y
+    a.x         < b.x + b.w + GAP &&
+    a.x + a.w   > b.x       - GAP &&
+    a.y         < b.y + b.h + GAP &&
+    a.y + a.h   > b.y       - GAP
   );
 }
 
 /**
- * Given a dragged rect and a list of static rects, return the
- * nearest x/y that avoids all overlaps (iterative minimal push).
+ * Return the nearest (x, y) where `dragged` does not overlap any rect in `others`.
+ * Respects canvas left/top boundary (x >= 0, y >= 0).
+ * When going left would cross the boundary, falls back to pushing right or down.
  */
 export function resolveNoOverlap(
   dragged: Rect,
   others: Rect[],
-  maxIter = 30
+  maxIter = 60,
 ): { x: number; y: number } {
-  let { x, y } = dragged;
+  let x = Math.max(0, dragged.x);
+  let y = Math.max(0, dragged.y);
 
   for (let iter = 0; iter < maxIter; iter++) {
     let moved = false;
@@ -34,18 +36,28 @@ export function resolveNoOverlap(
       const r: Rect = { x, y, w: dragged.w, h: dragged.h };
       if (!overlaps(r, other)) continue;
 
-      // Amount needed to push in each of the 4 directions
       const pushRight = other.x + other.w + GAP - x;
       const pushLeft  = x + dragged.w + GAP - other.x;
       const pushDown  = other.y + other.h + GAP - y;
       const pushUp    = y + dragged.h + GAP - other.y;
 
-      const min = Math.min(pushRight, pushLeft, pushDown, pushUp);
+      // Candidates sorted by smallest push; skip left if it would go out of bounds
+      const candidates: { dist: number; apply: () => void }[] = [
+        { dist: pushRight, apply: () => { x += pushRight; } },
+        { dist: pushDown,  apply: () => { y += pushDown;  } },
+        { dist: pushUp,    apply: () => { y  = Math.max(0, y - pushUp); } },
+      ];
 
-      if      (min === pushRight) x += pushRight;
-      else if (min === pushLeft)  x -= pushLeft;
-      else if (min === pushDown)  y += pushDown;
-      else                        y -= pushUp;
+      if (x - pushLeft >= 0) {
+        candidates.push({ dist: pushLeft, apply: () => { x -= pushLeft; } });
+      }
+
+      candidates.sort((a, b) => a.dist - b.dist);
+      candidates[0].apply();
+
+      // Re-clamp after every push so boundary is always respected
+      x = Math.max(0, x);
+      y = Math.max(0, y);
 
       moved = true;
     }
@@ -53,5 +65,5 @@ export function resolveNoOverlap(
     if (!moved) break;
   }
 
-  return { x: Math.max(0, x), y: Math.max(0, y) };
+  return { x, y };
 }

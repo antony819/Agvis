@@ -4,7 +4,6 @@ import { useWorkspaceStore } from '../../viewmodels/workspaceViewModel';
 import Block from '../ui/Block';
 import AddBlockPanel from '../ui/AddBlockPanel';
 import TopBar from '../ui/TopBar';
-import AIComposer from '../ui/AIComposer';
 import Inspector from '../ui/Inspector';
 import PackExportDialog from '../ui/PackExportDialog';
 import CommunityPage from '../community/CommunityPage';
@@ -146,26 +145,6 @@ export default function Workspace() {
     [safeSpawnPos]
   );
 
-  // ── AI Composer ──────────────────────────────────────────
-  const handleComposerSend = useCallback((message: string) => {
-    // For now, route the message to a new Chat block
-    const pos = safeSpawnPos(80, 80);
-    const bt  = BLOCK_TYPES['chat'];
-    const id  = nanoid();
-    const newBlock: BlockInstance = {
-      id, type: 'chat', version: bt.version, position: pos,
-      name: 'Chat', config: { ...bt.defaultConfig, initialMessage: message },
-      selected: false, automationMode: false,
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-    };
-    useWorkspaceStore.setState((s) => ({
-      workspace: s.workspace
-        ? { ...s.workspace, blocks: [...s.workspace.blocks, newBlock] }
-        : s.workspace,
-    }));
-    setSelectedId(id);
-  }, [safeSpawnPos]);
-
   // ── Init ─────────────────────────────────────────────────
   if (!workspace) {
     createWorkspace('My Workspace');
@@ -222,7 +201,6 @@ export default function Workspace() {
             )}
           </div>
 
-          <AIComposer onSend={handleComposerSend} />
           <AddBlockPanel onAdd={handleAddBlock} />
         </>
       )}

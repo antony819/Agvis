@@ -5,6 +5,7 @@ import ChatBlock from '../blocks/ChatBlock';
 import DocumentBlock from '../blocks/DocumentBlock';
 import NoteBlock from '../blocks/NoteBlock';
 import KnowledgeBlock from '../blocks/KnowledgeBlock';
+import ComposerBlock from '../blocks/ComposerBlock';
 import { resolveNoOverlap } from '../../services/collisionService';
 import './Block.css';
 
@@ -39,7 +40,23 @@ export default function Block({
     const el = nodeRef.current;
     const w = el?.offsetWidth ?? 300;
     const h = el?.offsetHeight ?? 200;
-    const resolved = resolveNoOverlap({ x: data.x, y: data.y, w, h }, getOtherRects(block.id));
+    
+    // Get canvas bounds
+    const canvas = el?.closest('.workspace-canvas') as HTMLElement | null;
+    const canvasWidth = canvas?.clientWidth ?? window.innerWidth;
+    const canvasHeight = canvas?.clientHeight ?? window.innerHeight;
+    
+    // Constrain to canvas bounds (keep at least 50px visible)
+    const minVisible = 50;
+    let constrainedX = Math.max(-w + minVisible, Math.min(data.x, canvasWidth - minVisible));
+    let constrainedY = Math.max(0, Math.min(data.y, canvasHeight - minVisible));
+    
+    // Then resolve collisions
+    const resolved = resolveNoOverlap(
+      { x: constrainedX, y: constrainedY, w, h }, 
+      getOtherRects(block.id)
+    );
+    
     setPos(resolved);
     onUpdate(block.id, { position: resolved });
   };
@@ -135,6 +152,7 @@ export default function Block({
           )}
           {block.type === 'note' && <NoteBlock block={block} onUpdate={onUpdate} />}
           {block.type === 'knowledge' && <KnowledgeBlock block={block} onUpdate={onUpdate} />}
+          {block.type === 'composer' && <ComposerBlock block={block} onUpdate={onUpdate} />}
         </div>
       </div>
     </Draggable>

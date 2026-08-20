@@ -1,5 +1,18 @@
 const API_BASE = 'http://localhost:8000';
 
+export async function testApiConnection(apiKey: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/test-connection`, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': apiKey,
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to connect');
+  }
+}
+
 export interface UploadDocumentResponse {
   documentId: string;
   filename: string;
@@ -55,12 +68,14 @@ export interface ChatCompletionRequest {
 }
 
 export async function* streamChatCompletion(
-  request: ChatCompletionRequest
+  request: ChatCompletionRequest,
+  apiKey: string
 ): AsyncGenerator<{ type: string; content?: string; error?: string }> {
   const response = await fetch(`${API_BASE}/api/chat/completion`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-API-Key': apiKey,
     },
     body: JSON.stringify(request),
   });

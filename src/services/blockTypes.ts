@@ -217,12 +217,52 @@ export const NoteBlockType: BlockTypeDefinition = {
   hasAutomationMode: true,
 };
 
+// Composer Block Definition
+export const ComposerBlockType: BlockTypeDefinition = {
+  type: 'composer',
+  version: '1.0.0',
+  name: 'Composer',
+  icon: '✍️',
+  description: 'Workspace command input',
+  category: 'chat',
+  inputs: [],
+  outputs: [
+    {
+      id: 'message',
+      name: 'Message',
+      type: PortDataType.TEXT,
+      required: true,
+      description: 'Last message sent',
+    },
+  ],
+  configSchema: {
+    type: 'object',
+    properties: {
+      history: {
+        type: 'array',
+        default: [],
+      },
+      lastMessage: {
+        type: 'string',
+        default: '',
+      },
+    },
+  },
+  defaultConfig: {
+    history: [],
+    lastMessage: '',
+  },
+  hasWidgetMode: true,
+  hasAutomationMode: false,
+};
+
 // Registry of all block types
 export const BLOCK_TYPES: Record<string, BlockTypeDefinition> = {
   chat: ChatBlockType,
   document: DocumentBlockType,
   knowledge: KnowledgeBlockType,
   note: NoteBlockType,
+  composer: ComposerBlockType,
 };
 
 export function getBlockType(type: string): BlockTypeDefinition | undefined {

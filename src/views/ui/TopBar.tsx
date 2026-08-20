@@ -46,7 +46,7 @@ export default function TopBar({ onExport }: Props) {
         <button className="topbar-tool-btn" onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Y)">↪</button>
         {onExport && (
           <button className="topbar-tool-btn export-btn" onClick={onExport} title="Export as Pack">
-            ⬆ Export Pack
+            ⬆ Export
           </button>
         )}
       </div>

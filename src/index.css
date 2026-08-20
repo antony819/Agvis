@@ -51,6 +51,16 @@ body {
   overflow: hidden;
 }
 
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 #root {
   width: 100vw;
   height: 100vh;

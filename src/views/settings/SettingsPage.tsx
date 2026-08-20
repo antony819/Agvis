@@ -1,20 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './SettingsPage.css';
-import './SettingsPage.css';
+import { useSettingsStore } from '../../services/settingsStore';
+import { testApiConnection } from '../../services/api';
 
 export default function SettingsPage() {
-  const [model, setModel] = useState('gpt-4');
-  const [apiKey, setApiKey] = useState('');
+  const {
+    apiKey,
+    model,
+    embeddingModel,
+    chunkSize,
+    chunkOverlap,
+    setApiKey,
+    setModel,
+    setEmbeddingModel,
+    setChunkSize,
+    setChunkOverlap,
+    loadFromStorage,
+  } = useSettingsStore();
+
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
-  const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
-  const [chunkSize, setChunkSize] = useState(512);
-  const [chunkOverlap, setChunkOverlap] = useState(50);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [localApiKey, setLocalApiKey] = useState(apiKey);
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
+
+  useEffect(() => {
+    setLocalApiKey(apiKey);
+  }, [apiKey]);
 
   const testConnection = async () => {
+    if (!localApiKey) return;
+    
     setTestStatus('testing');
-    await new Promise((r) => setTimeout(r, 1200));
-    setTestStatus(apiKey.startsWith('sk-') ? 'ok' : 'fail');
+    try {
+      await testApiConnection(localApiKey);
+      setTestStatus('ok');
+      setApiKey(localApiKey);
+    } catch (error) {
+      setTestStatus('fail');
+    }
+  };
+
+  const handleApiKeyChange = (value: string) => {
+    setLocalApiKey(value);
+    setTestStatus('idle');
   };
 
   return (
@@ -31,8 +62,6 @@ export default function SettingsPage() {
             <option value="gpt-4">OpenAI GPT-4</option>
             <option value="gpt-4o">OpenAI GPT-4o</option>
             <option value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
-            <option value="claude-3-opus">Anthropic Claude 3 Opus</option>
-            <option value="claude-3-sonnet">Anthropic Claude 3 Sonnet</option>
           </select>
         </div>
 
@@ -41,14 +70,14 @@ export default function SettingsPage() {
           <div className="api-key-row">
             <input
               type={apiKeyVisible ? 'text' : 'password'}
-              value={apiKey}
-              onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); }}
+              value={localApiKey}
+              onChange={(e) => handleApiKeyChange(e.target.value)}
               placeholder="sk-…"
             />
             <button className="icon-btn" onClick={() => setApiKeyVisible((v) => !v)}>
               {apiKeyVisible ? '🙈' : '👁'}
             </button>
-            <button className="test-btn" onClick={testConnection} disabled={!apiKey || testStatus === 'testing'}>
+            <button className="test-btn" onClick={testConnection} disabled={!localApiKey || testStatus === 'testing'}>
               {testStatus === 'testing' ? 'Testing…' : 'Test'}
             </button>
           </div>

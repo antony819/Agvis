@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import type { BlockInstance } from '../../models';
 import { streamChatCompletion } from '../../services/api';
+import { useSettingsStore } from '../../services/settingsStore';
 
 interface Citation {
   documentId: string;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function ChatBlock({ block }: Props) {
+  const { apiKey, model } = useSettingsStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,16 @@ export default function ChatBlock({ block }: Props) {
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
+
+    if (!apiKey) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: input },
+        { role: 'assistant', content: '⚠ No API key configured. Please set your OpenAI API key in Settings.' },
+      ]);
+      setInput('');
+      return;
+    }
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -52,12 +64,15 @@ export default function ChatBlock({ block }: Props) {
         userMessage,
       ].map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-      const stream = streamChatCompletion({
-        messages: apiMessages,
-        model: block.config.model || 'gpt-4',
-        temperature: block.config.temperature,
-        contextBlockId: block.config.contextBlockId,
-      });
+      const stream = streamChatCompletion(
+        {
+          messages: apiMessages,
+          model: model,
+          temperature: block.config.temperature ?? 0.7,
+          contextBlockId: block.config.contextBlockId,
+        },
+        apiKey
+      );
 
       let accumulated = '';
       const citations: Citation[] = [];

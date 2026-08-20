@@ -17,6 +17,12 @@
   position: relative;
   overflow: auto;
   background: var(--bg);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.workspace-canvas::-webkit-scrollbar {
+  display: none;
 }
 
 .workspace-empty {

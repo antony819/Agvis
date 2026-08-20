@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
+from openai import AsyncOpenAI
 
 app = FastAPI(title="Agvis API")
 
@@ -52,6 +53,25 @@ class ChatCompletionRequest(BaseModel):
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Agvis API"}
+
+
+@app.post("/api/test-connection")
+async def test_connection(x_api_key: Optional[str] = Header(None)):
+    """Test OpenAI API key validity"""
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="API key required")
+    
+    try:
+        client = AsyncOpenAI(api_key=x_api_key)
+        # Make a minimal API call to test the key
+        await client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "test"}],
+            max_tokens=1
+        )
+        return {"status": "ok", "message": "API key is valid"}
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid API key: {str(e)}")
 
 
 @app.post("/api/documents/upload", response_model=UploadDocumentResponse)
@@ -122,23 +142,48 @@ async def get_document_status(document_id: str):
 
 
 @app.post("/api/chat/completion")
-async def chat_completion(request: ChatCompletionRequest):
+async def chat_completion(
+    request: ChatCompletionRequest,
+    x_api_key: Optional[str] = Header(None)
+):
     """Stream chat completion (SSE)"""
     
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="API key required")
+    
     async def generate():
-        # Simulate streaming response
-        response = "This is a simulated AI response. In production, this would call an actual LLM API."
-        
-        if request.contextBlockId:
-            response += f" (Using context from block: {request.contextBlockId})"
-        
-        # Stream tokens
-        for word in response.split():
-            yield f"data: {json.dumps({'type': 'token', 'content': word + ' '})}\n\n"
-            await asyncio.sleep(0.05)
-        
-        # Send done
-        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        try:
+            # Initialize OpenAI client with provided API key
+            client = AsyncOpenAI(api_key=x_api_key)
+            
+            # Convert messages to OpenAI format
+            messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+            
+            # Add context if provided
+            if request.contextBlockId and request.contextBlockId in documents:
+                doc = documents[request.contextBlockId]
+                context = f"Context from document '{doc['filename']}':\n{doc['content'][:2000].decode('utf-8', errors='ignore')}"
+                messages.insert(0, {"role": "system", "content": context})
+            
+            # Create streaming completion
+            stream = await client.chat.completions.create(
+                model=request.model,
+                messages=messages,
+                temperature=request.temperature,
+                stream=True
+            )
+            
+            # Stream tokens
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield f"data: {json.dumps({'type': 'token', 'content': chunk.choices[0].delta.content})}\n\n"
+            
+            # Send done
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            
+        except Exception as e:
+            error_message = str(e)
+            yield f"data: {json.dumps({'type': 'error', 'error': error_message})}\n\n"
     
     return StreamingResponse(generate(), media_type="text/event-stream")
 

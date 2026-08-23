@@ -38,7 +38,7 @@ export default function SettingsPage() {
       await testApiConnection(localApiKey);
       setTestStatus('ok');
       setApiKey(localApiKey);
-    } catch (error) {
+    } catch {
       setTestStatus('fail');
     }
   };

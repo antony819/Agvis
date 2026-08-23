@@ -109,7 +109,7 @@ export default function ChatBlock({ block }: Props) {
           );
         }
       }
-    } catch (err: any) {
+    } catch {
       // Backend offline — show simulated response
       const fallback =
         'Backend is offline. Start the FastAPI server at localhost:8000 to enable real AI responses.';
